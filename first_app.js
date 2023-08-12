@@ -1,28 +1,42 @@
 const http = require('http');
+const fs = require('fs');
 
 const server = http.createServer((req,res)=> {
     //res.setHeader('Content-Type','text/html');
-    if(req.url ==='/home') {
-        res.write('<html>');
-        res.write('<head><title>My Fist Page</title></head>');
-        res.write('<body><h1>Welcome home</h1></body>');
-        res.write('</html>');
-        res.end();
+    if(req.url ==='/') {
+        fs.readFile('message.txt', 'utf8', (err, data) => {
+            if (!err) {
+                res.write('<p>' + data + '</p>');
+            }
+            res.write('<html>');
+            res.write('<head><title>My First Page</title></head>');
+            res.write('<body><form action="/message" method="POST"><input type="text" name="message"><button type="submit">Send</button></form></body>');
+            res.write('</html>');
+            res.end();
+        });
+     
     }
-    else if(req.url === '/about') {
-        res.write('<html>');
-        res.write('<head><title>My Second Page</title></head>');
-        res.write('<body><h1>Welcome to About Us page</h1></body>')
-        res.write('</html');
-        res.end();
+
+    if (req.url ==='/message' && req.method ==="POST") {
+        const body = [];
+        req.on('data',(chunk)=>{
+            body.push(chunk);
+        });
+        return req.on('end',()=>{
+            const parsebody = Buffer.concat(body).toString();
+            const message = parsebody.split('=')[1];
+            fs.writeFile('message.txt', message, err => {
+                res.statusCode = 302
+                res.setHeader('Location','/');
+                return res.end();
+            });
+            
+            
+        });
+        
+        
     }
-    else if(req.url ==='/node') {
-        res.write('<html>');
-        res.write('<head><title>My Thrid Page</title></head>');
-        res.write('<body><h1>Welcome to My Node Js project</h1></body>');
-        res.write('</html>');
-        res.end();
-    }
+    
 });
 
 server.listen(3000)
